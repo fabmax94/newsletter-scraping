@@ -1,23 +1,26 @@
 from selenium import webdriver
 import time
 import requests
+import sys
+
 try:
-    chrome = webdriver.Chrome('/home/fabio/Downloads/chromedriver')
+    chrome = webdriver.Chrome(sys.argv[1])
     chrome.get("https://www.medium.com")
     chrome.find_elements_by_xpath("//*[contains(text(), 'Sign in')]")[0].click()
+    time.sleep(5)
     chrome.find_elements_by_xpath("//*[contains(text(), 'Sign in with Google')]")[0].click()
     time.sleep(5)
-    chrome.find_elements_by_id('identifierId')[0].send_keys('famhs@ecomp.poli.br')
+    chrome.find_elements_by_id('identifierId')[0].send_keys(sys.argv[2])
     chrome.find_elements_by_xpath("//*[contains(text(), 'Próxima')]")[0].click()
     time.sleep(5)
-    chrome.find_element_by_name('password').send_keys('34395716jack')
+    chrome.find_element_by_name('password').send_keys(sys.argv[3])
     chrome.find_elements_by_xpath("//*[contains(text(), 'Próxima')]")[0].click()
     time.sleep(10)
     links = chrome.find_elements_by_css_selector(".ds-link")
 
     links = [link for link in links if len(link.get_attribute('href')) > 40]
     links = [link.get_attribute('href') for link in links]
-    for link in links:
+    for link in list(set(links)):
         chrome.get(link)
         response_text = chrome.page_source.replace("/max/50", "/max/1080").replace("/max/30", "/max/1080").replace("Top highlight", "")
 
@@ -43,8 +46,10 @@ try:
             'title': title,
             'description': description,
             'image': image,
-            'author': author
+            'author': author,
+            'url': link,
+            'portal': 'Medium'
         }
-        print(requests.post('http://192.168.0.18:8800/news/save', data=data).json())
+        print(requests.post('https://newsletter-plus.herokuapp.com/api/news/', data=data).json())
 finally:
     chrome.close()
